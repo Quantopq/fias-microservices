@@ -5,7 +5,7 @@
     container_name: fias-sqlserver
     environment:
       - ACCEPT_EULA=Y
-      - SA_PASSWORD=YourPassword123!
+      - SA_PASSWORD=${SQL_PASSWORD}
       - MSSQL_PID=Express
     ports:
       - "1433:1433"
@@ -27,7 +27,7 @@
       dockerfile: Dockerfile
     container_name: fias-api-service
     environment:
-      - DadataApiKey=447b1e46c94767b89d8c19857e06143370c1b62b
+      - DadataApiKey=${DADATA_API_KEY}
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "8080:8080"
