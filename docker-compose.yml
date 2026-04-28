@@ -1,0 +1,64 @@
+﻿services:
+  # MSSQL Server
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: fias-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=YourPassword123!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    networks:
+      - fias-network
+    restart: unless-stopped
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourPassword123!' -Q 'SELECT 1'
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  # FIAS API Service (1-й сервис)
+  fias-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fias-api-service
+    environment:
+      - DadataApiKey=447b1e46c94767b89d8c19857e06143370c1b62b
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "8080:8080"
+    networks:
+      - fias-network
+    depends_on:
+      - sqlserver
+    restart: unless-stopped
+
+  # Client API Service (2-й сервис)
+  client-api:
+    build:
+      context: ./ClientApiService
+      dockerfile: Dockerfile
+    container_name: client-api-service
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=FiasDb;User=sa;Password=YourPassword123!;TrustServerCertificate=True;
+      - FiasServiceUrl=http://fias-api:8080
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "8081:8081"
+    networks:
+      - fias-network
+    depends_on:
+      - fias-api
+      - sqlserver
+    restart: unless-stopped
+
+networks:
+  fias-network:
+    driver: bridge
+
+volumes:
+    sqlserver-data:
