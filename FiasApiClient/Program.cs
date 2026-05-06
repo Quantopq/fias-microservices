@@ -3,14 +3,14 @@ using Microsoft.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавляем контроллеры
+// контроллеры
 builder.Services.AddControllers();
 
-// Добавляем Swagger
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Добавляем HttpClient для FIAS API
+// HttpClient для FIAS API
 builder.Services.AddHttpClient<IFiasService, FiasService>(client =>
 {
     client.BaseAddress = new Uri("https://suggestions.dadata.ru/suggestions/api/4_1/rs");

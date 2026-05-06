@@ -4,6 +4,7 @@ using FiasApiClient.Models;
 using System.Threading.Tasks;
 using System;
 
+
 namespace FiasApiClient.Services
 {
     public class FiasService : IFiasService
@@ -21,9 +22,9 @@ namespace FiasApiClient.Services
             _apiKey = configuration["DaApiKey"] ?? "";
             _logger = logger;
 
-            _logger.LogInformation("API Key loaded: {KeyLength} chars", _apiKey.Length);
-            _logger.LogInformation("API Key starts with: {KeyStart}",
-                _apiKey.Length > 10 ? _apiKey.Substring(0, 10) + "..." : "TOO SHORT");
+            _logger.LogInformation("API Key загружен: {KeyLength} символов", _apiKey.Length);
+            _logger.LogInformation("API Key начинается с: {KeyStart}",
+                _apiKey.Length > 10 ? _apiKey.Substring(0, 10) + "..." : "СЛИШКОМ КОРОТКИЙ");
 
             _httpClient.DefaultRequestHeaders.Remove("Authorization");
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Token {_apiKey}");
@@ -45,14 +46,13 @@ namespace FiasApiClient.Services
                     System.Text.Encoding.UTF8,
                     "application/json");
 
-               
                 var fullUrl = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address";
-                _logger.LogInformation("Request to: {Url}", fullUrl);
+                _logger.LogInformation("Запрос к: {Url}", fullUrl);
 
                 var response = await _httpClient.PostAsync(fullUrl, content);
 
-                _logger.LogInformation("Response Status: {StatusCode}", response.StatusCode);
-                _logger.LogInformation("Response Content-Type: {ContentType}",
+                _logger.LogInformation("Статус ответа: {StatusCode}", response.StatusCode);
+                _logger.LogInformation("Content-Type ответа: {ContentType}",
                     response.Content.Headers.ContentType);
 
                 var responseString = await response.Content.ReadAsStringAsync();
@@ -61,8 +61,9 @@ namespace FiasApiClient.Services
                 {
                     if (responseString.TrimStart().StartsWith("<"))
                     {
-                        _logger.LogError("Dadata returned HTML! API Key invalid or expired!");
-                        _logger.LogError("Response: {Response}", responseString.Substring(0, Math.Min(500, responseString.Length)));
+                        _logger.LogError("Dadata вернул HTML вместо JSON! Проверьте API Key!");
+                        _logger.LogError("Ответ (первые 500 символов): {Response}",
+                            responseString.Substring(0, Math.Min(500, responseString.Length)));
                         return null;
                     }
 
@@ -73,7 +74,7 @@ namespace FiasApiClient.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Exception in SearchAddressAsync");
+                _logger.LogError(ex, "Исключение в методе SearchAddressAsync");
                 return null;
             }
         }

@@ -1,4 +1,4 @@
-﻿using ClientApiService.Data;
+﻿  using ClientApiService.Data;
 using ClientApiService.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
@@ -32,7 +32,7 @@ namespace ClientApiService.Services
                 _logger.LogInformation("Обработка запроса от клиента {Client} для адреса: {Region}", 
                     request.Client, request.Region);
 
-                // Отправляем запрос в FIAS сервис
+                // Отправляение запроса в FIAS сервис
                 var fiasResponse = await SendRequestToFiasServiceAsync(request);
                 
                 if (fiasResponse == null || string.IsNullOrEmpty(fiasResponse.kladr))
@@ -41,7 +41,7 @@ namespace ClientApiService.Services
                     return null;
                 }
 
-                // Сохраняем результат в БД
+                // Сохранение результата в БД
                 var result = new RequestResult
                 {
                     Client = request.Client,

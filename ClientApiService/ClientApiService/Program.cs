@@ -5,10 +5,10 @@ using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Добавляем контроллеры
+// контроллеры
 builder.Services.AddControllers();
 
-// Добавляем DbContext для MSSQL
+//  DbContext для MSSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? Environment.GetEnvironmentVariable("CONNECTION_STRING")
     ?? "Server=sqlserver;Database=FiasDb;User=sa;Password=YourPassword123!;TrustServerCertificate=True;";
@@ -16,13 +16,13 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
-// Добавляем HttpClientFactory
+// HttpClientFactory
 builder.Services.AddHttpClient();
 
-// Добавляем сервисы
+// сервисы
 builder.Services.AddScoped<IClientService, ClientService>();
 
-// Добавляем Swagger
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

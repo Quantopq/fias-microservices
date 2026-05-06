@@ -29,7 +29,7 @@ namespace FiasApiClient.Controllers
 
             var result = await _fiasService.SearchAddressAsync(request.Region);
 
-            // Исправленная проверка null
+            // проверка null
             if (result == null || result.Suggestions == null || result.Suggestions.Count == 0)
             {
                 return NotFound(new { client = request.Client, kladr = (string?)null });
