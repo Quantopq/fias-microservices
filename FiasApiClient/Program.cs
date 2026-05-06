@@ -1,24 +1,21 @@
 ﻿using FiasApiClient.Services;
-using FiasApiClient.Models;
+using Microsoft.Extensions.Http;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Добавляем контроллеры
 builder.Services.AddControllers();
 
-// Регистрируем HttpClient для работы с Dadata
-builder.Services.AddSingleton<DadataFiasClient>(sp =>
-{
-    var apiKey = builder.Configuration["DadataApiKey"]
-        ?? Environment.GetEnvironmentVariable("DADATA_API_KEY")
-        ?? "447b1e46c94767b89d8c19857e06143370c1b62b";
-
-    return new DadataFiasClient(apiKey);
-});
-
-// Добавляем Swagger для тестирования
+// Добавляем Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Добавляем HttpClient для FIAS API
+builder.Services.AddHttpClient<IFiasService, FiasService>(client =>
+{
+    client.BaseAddress = new Uri("https://suggestions.dadata.ru/suggestions/api/4_1/rs");
+    client.Timeout = TimeSpan.FromSeconds(100);
+});
 
 var app = builder.Build();
 
@@ -32,11 +29,5 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
-
-// Запускаем на всех интерфейсах
-app.Urls.Add("http://0.0.0.0:8080");
-
-Console.WriteLine("🚀 FIAS API Service запущен на http://localhost:8080");
-Console.WriteLine("📚 Swagger: http://localhost:8080/swagger");
 
 app.Run();

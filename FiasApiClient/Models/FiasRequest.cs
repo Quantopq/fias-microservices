@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+Ôªøusing System.Text.Json.Serialization;
 
 namespace FiasApiClient.Models
 {
@@ -8,6 +8,6 @@ namespace FiasApiClient.Models
         public string Query { get; set; } = string.Empty;
         
         [JsonPropertyName("count")]
-        public int Count { get; set; } = 10; // Ã‡ÍÒ. 20
+        public int Count { get; set; } = 10; // –ú–∞–∫—Å. 20
     }
 }

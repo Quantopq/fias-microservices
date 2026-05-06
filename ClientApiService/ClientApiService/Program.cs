@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ClientApiService.Data;
+using ClientApiService.Services;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,13 +11,16 @@ builder.Services.AddControllers();
 // Добавляем DbContext для MSSQL
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? Environment.GetEnvironmentVariable("CONNECTION_STRING")
-   ?? "Server=sqlserver;Database=FiasDb;User=sa;Password=YourPassword123!;TrustServerCertificate=True;";
+    ?? "Server=sqlserver;Database=FiasDb;User=sa;Password=YourPassword123!;TrustServerCertificate=True;";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // Добавляем HttpClientFactory
 builder.Services.AddHttpClient();
+
+// Добавляем сервисы
+builder.Services.AddScoped<IClientService, ClientService>();
 
 // Добавляем Swagger
 builder.Services.AddEndpointsApiExplorer();
@@ -35,7 +39,6 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 
-// Запускаем на всех интерфейсах
 app.Urls.Add("http://0.0.0.0:8081");
 
 Console.WriteLine("🚀 Client API Service запущен на http://localhost:8081");

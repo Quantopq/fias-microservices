@@ -1,4 +1,4 @@
-namespace ClientApiService.Models
+﻿namespace ClientApiService.Models
 {
     public class ClientRequestDto
     {

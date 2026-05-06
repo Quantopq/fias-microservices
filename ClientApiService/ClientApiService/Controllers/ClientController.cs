@@ -1,8 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
+п»їusing Microsoft.AspNetCore.Mvc;
 using ClientApiService.Models;
-using ClientApiService.Data;
-using System.Text;
-using System.Text.Json;
+using ClientApiService.Services;
 
 namespace ClientApiService.Controllers
 {
@@ -10,22 +8,15 @@ namespace ClientApiService.Controllers
     [Route("api/[controller]")]
     public class ClientController : ControllerBase
     {
-        private readonly AppDbContext _context;
-        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IClientService _clientService;
         private readonly ILogger<ClientController> _logger;
-        private readonly string _fiasServiceUrl;
 
         public ClientController(
-            AppDbContext context, 
-            IHttpClientFactory httpClientFactory,
-            ILogger<ClientController> logger,
-            IConfiguration configuration)
+            IClientService clientService,
+            ILogger<ClientController> logger)
         {
-            _context = context;
-            _httpClientFactory = httpClientFactory;
+            _clientService = clientService;
             _logger = logger;
-            _fiasServiceUrl = configuration["FiasServiceUrl"] 
-                ?? "http://fias-api:8080";
         }
 
         [HttpPost("process")]
@@ -33,72 +24,22 @@ namespace ClientApiService.Controllers
         {
             try
             {
-                _logger.LogInformation($"Обработка запроса от клиента {request.Client} для адреса: {request.Region}");
+                var result = await _clientService.ProcessClientRequestAsync(request);
 
-                var fiasResponse = await SendRequestToFiasService(request);
-
-                if (fiasResponse == null || string.IsNullOrEmpty(fiasResponse.kladr)) 
+                if (result == null)
                 {
-                    _logger.LogWarning($"KLADR не найден для адреса: {request.Region}");
-                    return NotFound(new { error = "Адрес не найден в ФИАС" });
+                    return NotFound(new { error = "РђРґСЂРµСЃ РЅРµ РЅР°Р№РґРµРЅ РІ Р¤РРђРЎ" });
                 }
 
-                var result = new RequestResult
-                {
-                    Client = request.Client,
-                    Kladr = fiasResponse.kladr,  
-                    ResponseDate = DateTime.UtcNow
-                };
-
-                _context.RequestResults.Add(result);
-                await _context.SaveChangesAsync();
-
-                _logger.LogInformation($"Сохранен результат: Client={request.Client}, KLADR={fiasResponse.kladr}");  
-
-                return Ok(new ClientResponseDto
-                {
-                    client = request.Client, 
-                    kladr = fiasResponse.kladr  
-                });
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Ошибка при обработке запроса");
-                return StatusCode(500, new { error = "Внутренняя ошибка сервера" });
+                _logger.LogError(ex, "РћС€РёР±РєР° РїСЂРё РѕР±СЂР°Р±РѕС‚РєРµ Р·Р°РїСЂРѕСЃР°");
+                return StatusCode(500, new { error = "Р’РЅСѓС‚СЂРµРЅРЅСЏСЏ РѕС€РёР±РєР° СЃРµСЂРІРµСЂР°" });
             }
         }
 
-        private async Task<ClientResponseDto?> SendRequestToFiasService(ClientRequestDto request)
-        {
-            try
-            {
-                var client = _httpClientFactory.CreateClient();
-                client.Timeout = TimeSpan.FromSeconds(30);
-
-                var content = new StringContent(
-                    JsonSerializer.Serialize(request),
-                    Encoding.UTF8,
-                    "application/json");
-
-                var response = await client.PostAsync($"{_fiasServiceUrl}/api/Fias/suggest", content);
-
-                if (response.IsSuccessStatusCode)
-                {
-
-                    var responseString = await response.Content.ReadAsStringAsync();
-                    return JsonSerializer.Deserialize<ClientResponseDto>(responseString);
-                }
-
-                return null;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Ошибка при запросе к FIAS сервису");
-                return null;
-            }
-        }
-
-        // Эндпоинт для проверки статуса
         [HttpGet("health")]
         public IActionResult HealthCheck()
         {
