@@ -27,8 +27,8 @@
       dockerfile: Dockerfile
     container_name: fias-api-service
     environment:
-      - DaApiKey=${DADATA_API_KEY}
-      - DaBaseUrl=https://suggestions.dadata.ru/suggestions/api/4_1/rs
+      - Dadata__ApiKey=${DADATA_API_KEY} 
+      - Dadata__BaseUrl=https://suggestions.dadata.ru/suggestions/api/4_1/rs
       - ASPNETCORE_ENVIRONMENT=Development
     ports:
       - "8080:8080"

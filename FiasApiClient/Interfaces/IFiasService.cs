@@ -1,4 +1,4 @@
-﻿using FiasApiClient.Models; 
+﻿
 
 namespace FiasApiClient.Services
 {

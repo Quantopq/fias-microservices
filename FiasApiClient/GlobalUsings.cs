@@ -1,3 +1,14 @@
-global using Microsoft.AspNetCore.Mvc;
+﻿global using Microsoft.AspNetCore.Mvc;
 global using Microsoft.Extensions.Logging;
 global using Microsoft.Extensions.Configuration;
+global using System.Text.Json;
+global using System.Net.Http.Headers;
+global using System.Net.Http;
+global using System.Text;
+global using FiasApiClient.Models;
+global using FiasApiClient.Services;
+global using System.Threading.Tasks;
+global using System;
+global using Microsoft.Extensions.Http;
+global using System.Text.Json.Serialization;
+global using System.Collections.Generic;

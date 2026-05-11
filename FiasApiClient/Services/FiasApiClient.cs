@@ -7,7 +7,7 @@ using FiasApiClient.Models;
 
 namespace FiasApiClient.Services
 {
-	public class DadataFiasClient  // или FiasService, FiasApiClientService
+	public class DadataFiasClient  
 	{
 		private readonly HttpClient _httpClient;
         private readonly string _apiKey;
@@ -55,8 +55,7 @@ namespace FiasApiClient.Services
             }
         }
 
-        // Важно: HttpClient должен жить долго! Не создавай новый для каждого запроса.
-        // Для продакшена лучше использовать IHttpClientFactory, но для консоли хватит и так.
+
         public void Dispose() => _httpClient?.Dispose();
     }
 }

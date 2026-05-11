@@ -1,7 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
-using ClientApiService.Models;
-
-namespace ClientApiService.Data
+﻿namespace ClientApiService.Data
 {
     public class AppDbContext : DbContext
     {

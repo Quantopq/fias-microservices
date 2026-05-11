@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using FiasApiClient.Services;
-using FiasApiClient.Models;
+﻿
 
 namespace FiasApiClient.Controllers
 {

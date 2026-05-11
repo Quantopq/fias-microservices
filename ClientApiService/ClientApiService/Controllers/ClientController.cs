@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ClientApiService.Models;
-using ClientApiService.Services;
+﻿
 
 namespace ClientApiService.Controllers
 {

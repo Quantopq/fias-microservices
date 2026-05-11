@@ -1,10 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using System.Text.Json;
-using FiasApiClient.Models;
-using System.Threading.Tasks;
-using System;
-
-
+﻿
 namespace FiasApiClient.Services
 {
     public class FiasService : IFiasService
@@ -12,6 +6,7 @@ namespace FiasApiClient.Services
         private readonly HttpClient _httpClient;
         private readonly string _apiKey;
         private readonly ILogger<FiasService> _logger;
+        private readonly string _baseUrl;
 
         public FiasService(
             HttpClient httpClient,
@@ -19,37 +14,36 @@ namespace FiasApiClient.Services
             ILogger<FiasService> logger)
         {
             _httpClient = httpClient;
-            _apiKey = configuration["DaApiKey"] ?? "";
+            _apiKey = configuration["Dadata:ApiKey"] ?? "";
+            _baseUrl = configuration["Dadata:BaseUrl"] ?? "https://suggestions.dadata.ru/suggestions/api/4_1/rs";
             _logger = logger;
 
             _logger.LogInformation("API Key загружен: {KeyLength} символов", _apiKey.Length);
-            _logger.LogInformation("API Key начинается с: {KeyStart}",
-                _apiKey.Length > 10 ? _apiKey.Substring(0, 10) + "..." : "СЛИШКОМ КОРОТКИЙ");
+            _logger.LogInformation("Base URL: {BaseUrl}", _baseUrl);
 
             _httpClient.DefaultRequestHeaders.Remove("Authorization");
             _httpClient.DefaultRequestHeaders.Add("Authorization", $"Token {_apiKey}");
             _httpClient.DefaultRequestHeaders.Accept.Add(
-                new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                new MediaTypeWithQualityHeaderValue("application/json"));
         }
 
         public async Task<FiasResponse?> SearchAddressAsync(string address)
         {
             try
             {
-                _logger.LogInformation("API Key: {Key}", _apiKey);
+                _logger.LogInformation("Запрос к Dadata для адреса: {Address}", address);
 
                 var request = new { query = address };
                 var json = JsonSerializer.Serialize(request);
 
                 var content = new StringContent(
                     json,
-                    System.Text.Encoding.UTF8,
+                    Encoding.UTF8,
                     "application/json");
 
-                var fullUrl = "https://suggestions.dadata.ru/suggestions/api/4_1/rs/suggest/address";
-                _logger.LogInformation("Запрос к: {Url}", fullUrl);
+                _logger.LogInformation("Запрос к: {Url}", $"{_baseUrl}/suggest/address");
 
-                var response = await _httpClient.PostAsync(fullUrl, content);
+                var response = await _httpClient.PostAsync($"{_baseUrl}/suggest/address", content);
 
                 _logger.LogInformation("Статус ответа: {StatusCode}", response.StatusCode);
                 _logger.LogInformation("Content-Type ответа: {ContentType}",
@@ -63,11 +57,23 @@ namespace FiasApiClient.Services
                     {
                         _logger.LogError("Dadata вернул HTML вместо JSON! Проверьте API Key!");
                         _logger.LogError("Ответ (первые 500 символов): {Response}",
-                            responseString.Substring(0, Math.Min(500, responseString.Length)));
+                            responseString.Length > 500 ? responseString.Substring(0, 500) : responseString);
                         return null;
                     }
 
-                    return JsonSerializer.Deserialize<FiasResponse>(responseString);
+                    var result = JsonSerializer.Deserialize<FiasResponse>(responseString);
+                    _logger.LogInformation("Успешная десериализация ответа");
+                    _logger.LogInformation("Количество suggestions: {Count}", result.Suggestions.Count);
+
+                    if (result.Suggestions.Count > 0)
+                    {
+                        _logger.LogInformation("Первый KLADR: {Kladr}", result.Suggestions[0].Data.KladrId);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Dadata не нашла адрес! Полный ответ: {Response}", responseString);
+                    }
+                    return result;
                 }
 
                 return null;
