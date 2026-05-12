@@ -57,6 +57,22 @@
       - sqlserver
     restart: unless-stopped
 
+      # Blazor Frontend
+  blazor-ui:
+    build:
+      context: .
+      dockerfile: FiasBlazor/Dockerfile
+    container_name: fias-blazor-ui
+    ports:
+      - "5000:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    networks:
+      - fias-network
+    depends_on:
+      - client-api
+    restart: unless-stopped
+
 networks:
   fias-network:
     driver: bridge

@@ -1,0 +1,52 @@
+﻿@page "/leads"
+@using MudBlazor
+@inject HttpClient Http
+
+<MudText Typo="Typo.h5" Class="mb-4">📋 История обработанных лидов</MudText>
+
+<MudTable Items="@_leads" Dense="true" Hover="true" Striped="true">
+    <HeaderContent>
+        <MudTh>ID</MudTh>
+        <MudTh>Client ID</MudTh>
+        <MudTh>Исходный адрес</MudTh>
+        <MudTh>KLADR</MudTh>
+        <MudTh>Статус</MudTh>
+        <MudTh>Дата</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="ID">@context.Id</MudTd>
+        <MudTd DataLabel="Client">@context.ClientId</MudTd>
+        <MudTd DataLabel="Address">@context.RawAddress</MudTd>
+        <MudTd DataLabel="KLADR">
+            <MudChip T="string" Color="@GetKladrColor(@context.Kladr)" Size="Size.Small">
+                @context.Kladr
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Status">  
+            <MudChip T="string" Color="@GetStatusColor(@context.Status)" Size="Size.Small">
+                @context.Status
+            </MudChip>
+        </MudTd>
+        <MudTd DataLabel="Date">@context.CreatedAt.ToString("dd.MM.yyyy HH:mm")</MudTd>
+    </RowTemplate>
+</MudTable>
+
+@code {
+    private List<LeadResponseDto> _leads = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _leads = await Http.GetFromJsonAsync<List<LeadResponseDto>>("http://client-api:8081/api/lead");
+    }
+
+    private Color GetStatusColor(string status) => status switch
+    {
+        "Processed" => Color.Success,
+        "Pending" => Color.Warning,
+        "Error" => Color.Error,
+        _ => Color.Default
+    };
+
+    private Color GetKladrColor(string? kladr) => 
+        string.IsNullOrEmpty(kladr) ? Color.Error : Color.Primary;
+}

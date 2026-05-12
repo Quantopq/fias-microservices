@@ -1,0 +1,27 @@
+﻿@page "/test"
+
+<h3>🧪 ТЕСТ СТРАНИЦА</h3>
+
+<p>Blazor Web App (.NET 8)</p>
+
+<button @onclick="OnClick" style="padding:15px 30px; font-size:18px; background:green; color:white;">
+    🔘 НАЖМИ МЕНЯ
+</button>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div style="margin-top:20px; padding:15px; background:#e0ffe0;">
+        <strong>✅ КНОПКА СРАБОТАЛА!</strong><br/>
+        @message<br/>
+        Время: @DateTime.Now.ToString("HH:mm:ss")
+    </div>
+}
+
+@code {
+    private string message = "";
+    
+    private void OnClick()
+    {
+        message = "Метод OnClick() был вызван!";
+    }
+}

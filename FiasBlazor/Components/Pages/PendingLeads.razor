@@ -1,0 +1,95 @@
+﻿@page "/leads/pending"
+@using MudBlazor
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+
+
+<MudText Typo="Typo.h5" Class="mb-4">⏳ Необработанные лиды</MudText>
+
+<MudAlert Severity="Severity.Info" Class="mb-4">
+    Нажмите "Обработать", чтобы отправить лид в FIAS для исправления адреса
+</MudAlert>
+
+@if (_pendingLeads == null)
+{
+        <MudProgressCircular Indeterminate="true" />
+}
+else if (_pendingLeads.Count == 0)
+{
+        <MudAlert Severity="Severity.Success">🎉 Все лиды обработаны!</MudAlert>
+}
+else
+{
+        <MudTable Items="@_pendingLeads" Dense="true" Hover="true">
+            <HeaderContent>
+                <MudTh>Client ID</MudTh>
+                <MudTh>Адрес</MudTh>
+                <MudTh>Дата</MudTh>
+                <MudTh>Действие</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Client">@context.ClientId</MudTd>
+                <MudTd DataLabel="Address">@context.RawAddress</MudTd>
+                <MudTd DataLabel="Date">@context.CreatedAt.ToString("dd.MM.yyyy HH:mm")</MudTd>
+                <MudTd DataLabel="Action">
+                    <MudButton Color="Color.Primary" 
+                               Variant="Variant.Filled" 
+                               Size="Size.Small"
+                               OnClick="@(() => ProcessLead(context.Id))"
+                               Disabled="@_processingIds.Contains(context.Id)">
+                    @if (_processingIds.Contains(context.Id))
+                    {
+                                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+                    }
+                        Обработать
+                    </MudButton>
+                </MudTd>
+            </RowTemplate>
+        </MudTable>
+}
+
+@code {
+    private List<LeadResponseDto>? _pendingLeads;
+    private HashSet<int> _processingIds = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadPendingLeads();
+    }
+
+    private async Task LoadPendingLeads()
+    {
+        _pendingLeads = await Http.GetFromJsonAsync<List<LeadResponseDto>>("http://client-api:8081/api/lead/pending");
+        _pendingLeads ??= new();
+    }
+
+    private async Task ProcessLead(int id)
+    {
+        _processingIds.Add(id);
+        StateHasChanged();
+
+        try
+        {
+            var response = await Http.PostAsync($"http://client-api:8081/api/lead/{id}/process", null);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("✅ Лид успешно обработан!", Severity.Success);
+                await LoadPendingLeads();
+            }
+            else
+            {
+                Snackbar.Add("❌ Ошибка обработки лида", Severity.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"❌ Ошибка: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            _processingIds.Remove(id);
+            StateHasChanged();
+        }
+    }
+}

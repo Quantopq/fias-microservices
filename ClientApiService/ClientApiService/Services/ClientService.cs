@@ -80,5 +80,101 @@ namespace ClientApiService.Services
 
             return null;
         }
+
+
+        public async Task<IEnumerable<LeadResponseDto>> GetAllLeadsAsync()
+        {
+            var leads = await _context.Leads
+                .OrderByDescending(l => l.CreatedAt)
+                .ToListAsync();
+
+            return leads.Select(MapToResponseDto);
+        }
+
+        public async Task<IEnumerable<LeadResponseDto>> GetPendingLeadsAsync()
+        {
+            var leads = await _context.Leads
+                .Where(l => l.Status == "Pending")
+                .OrderBy(l => l.CreatedAt)
+                .ToListAsync();
+
+            return leads.Select(MapToResponseDto);
+        }
+
+        public async Task<LeadResponseDto?> CreateLeadAsync(LeadRequestDto request)
+        {
+            var lead = new Lead
+            {
+                ClientId = request.ClientId,
+                ClientName = request.ClientName,
+                RawAddress = request.RawAddress,
+                Status = "Pending"
+            };
+
+            _context.Leads.Add(lead);
+            await _context.SaveChangesAsync();
+
+            return MapToResponseDto(lead);
+        }
+
+        public async Task<LeadResponseDto?> ProcessLeadAsync(int leadId)
+        {
+            var lead = await _context.Leads.FindAsync(leadId);
+            if (lead == null || lead.Status != "Pending")
+                return null;
+
+            try
+            {
+                // Вызываем FIAS API для получения исправленного адреса
+                var fiasRequest = new ClientRequestDto
+                {
+                    Client = lead.ClientId,
+                    Region = lead.RawAddress
+                };
+
+                var fiasResponse = await SendRequestToFiasServiceAsync(fiasRequest);
+
+                if (fiasResponse != null && !string.IsNullOrEmpty(fiasResponse.kladr))
+                {
+                    // Обновляем лид
+                    lead.CorrectedAddress = fiasResponse.client; // или распарсить адрес из ответа
+                    lead.Kladr = fiasResponse.kladr;
+                    lead.Status = "Processed";
+                    lead.ProcessedAt = DateTime.UtcNow;
+
+                    _context.Leads.Update(lead);
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    lead.Status = "Error";
+                    _context.Leads.Update(lead);
+                    await _context.SaveChangesAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Ошибка при обработке лида {LeadId}", leadId);
+                lead.Status = "Error";
+                _context.Leads.Update(lead);
+                await _context.SaveChangesAsync();
+            }
+
+            return MapToResponseDto(lead);
+        }
+
+        // Вспомогательный метод маппинга:
+        private LeadResponseDto MapToResponseDto(Lead lead) => new()
+        {
+            Id = lead.Id,
+            ClientId = lead.ClientId,
+            ClientName = lead.ClientName,
+            RawAddress = lead.RawAddress,
+            CorrectedAddress = lead.CorrectedAddress,
+            Kladr = lead.Kladr,
+            Status = lead.Status,
+            CreatedAt = lead.CreatedAt,
+            ProcessedAt = lead.ProcessedAt
+        };
     }
 }

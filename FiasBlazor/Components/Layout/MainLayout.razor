@@ -1,0 +1,37 @@
+﻿@inherits LayoutComponentBase
+@using MudBlazor
+
+<MudThemeProvider/>
+<MudDialogProvider/>
+<MudSnackbarProvider/>
+
+<MudLayout>
+    <MudAppBar Elevation="1" Color="Color.Primary">
+        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" OnClick="@ToggleDrawer" />
+        <MudText Typo="Typo.h6" Class="ml-2">🏭 FIAS Lead Manager</MudText>
+    </MudAppBar>
+
+    <MudDrawer @bind-Open="_drawerOpen" ClipMode="DrawerClipMode.Always" Elevation="0">
+        <MudNavMenu>
+            <MudNavLink Href="/" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Главная</MudNavLink>
+            <MudNavLink Href="/leads" Icon="@Icons.Material.Filled.List">📋 Все лиды</MudNavLink>
+            <MudNavLink Href="/leads/pending" Icon="@Icons.Material.Filled.PendingActions">⏳ Необработанные</MudNavLink>
+            <MudNavLink Href="/leads/create" Icon="@Icons.Material.Filled.Add">➕ Новый лид</MudNavLink>
+        </MudNavMenu>
+    </MudDrawer>
+
+    <MudMainContent>
+        <MudContainer Class="mt-4">
+            @Body
+        </MudContainer>
+    </MudMainContent>
+</MudLayout>
+
+@code {
+    private bool _drawerOpen = true;
+
+    private void ToggleDrawer()
+    {
+        _drawerOpen = !_drawerOpen;
+    }
+}

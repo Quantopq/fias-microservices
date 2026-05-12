@@ -1,0 +1,117 @@
+﻿@page "/leads/create"
+@using MudBlazor
+@inject HttpClient Http
+@inject ISnackbar Snackbar
+@inject NavigationManager NavManager
+
+
+<MudText Typo="Typo.h5" Class="mb-4">➕ Новый лид</MudText>
+
+<MudPaper Padding="Padding.Medium" Elevation="2">
+    <MudTextField @bind-Value="@clientId"
+                  Label="Client ID *"
+                  HelperText="Уникальный идентификатор клиента"
+                  Required="true"
+                  Margin="Margin.Dense"
+                  Variant="Variant.Outlined"
+                  Immediate="true"/>
+
+    <MudTextField @bind-Value="@clientName"
+                  Label="Имя клиента"
+                  HelperText="Опционально"
+                  Margin="Margin.Dense"
+                  Variant="Variant.Outlined"
+                  Immediate="true"/>
+
+    <MudTextField @bind-Value="@rawAddress"
+                  Label="Адрес *"
+                  HelperText="Введите адрес для исправления"
+                  Required="true"
+                  Lines="3"
+                  Margin="Margin.Dense"
+                  Variant="Variant.Outlined"
+                  Immediate="true"/>
+
+    <div class="d-flex justify-end mt-4">
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="@Cancel">
+            Отмена
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                   OnClick="@SubmitForm" Class="ml-2" Disabled="@isSubmitting">
+            @if (isSubmitting)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="mr-2"/>
+            }
+            Создать лид
+        </MudButton>
+    </div>
+</MudPaper>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <MudAlert Severity="@alertSeverity" Class="mt-4">
+        @message
+    </MudAlert>
+}
+
+@code {
+    private string clientId = "";
+    private string clientName = "";
+    private string rawAddress = "";
+    private bool isSubmitting = false;
+    private string message = "";
+    private Severity alertSeverity = Severity.Info;
+
+    // ✅ МЕТОД ПЕРЕИМЕНОВАН В SubmitForm
+    private async Task SubmitForm()
+    {
+        if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(rawAddress))
+        {
+            message = "Заполните обязательные поля!";
+            alertSeverity = Severity.Warning;
+            return;
+        }
+
+        isSubmitting = true;
+        message = "Отправка...";
+        alertSeverity = Severity.Info;
+
+        try
+        {
+            var json = "{\"clientId\":\"" + clientId + "\",\"clientName\":\"" + clientName + "\",\"rawAddress\":\"" + rawAddress + "\"}";
+            var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            
+            var response = await Http.PostAsync("http://client-api:8081/api/lead", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                message = "✅ Лид создан! Перенаправление...";
+                alertSeverity = Severity.Success;
+                
+                clientId = "";
+                clientName = "";
+                rawAddress = "";
+                
+                await Task.Delay(1000);
+                NavManager.NavigateTo("/leads/pending", forceLoad: true);
+            }
+            else
+            {
+                var errorText = await response.Content.ReadAsStringAsync();
+                message = "❌ Ошибка: " + errorText;
+                alertSeverity = Severity.Error;
+            }
+        }
+        catch (Exception ex)
+        {
+            message = "❌ Ошибка: " + ex.Message;
+            alertSeverity = Severity.Error;
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
+    }
+
+    private void Cancel() => NavManager.NavigateTo("/leads");
+}
