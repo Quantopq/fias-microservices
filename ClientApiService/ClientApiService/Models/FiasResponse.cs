@@ -1,9 +1,10 @@
-﻿using System.Collections.Generic;
+﻿using System.Text.Json.Serialization;  
 
 namespace FiasApiClient.Models
 {
-    public class FiasResponseDto
+    public class FiasResponse
     {
+        [JsonPropertyName("suggestions")]
         public List<FiasSuggestion> Suggestions { get; set; } = new();
     }
 }

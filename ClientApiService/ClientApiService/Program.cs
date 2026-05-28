@@ -1,23 +1,103 @@
-﻿using System;
+﻿using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using ClientApiService.Data;
+using ClientApiService.Models;
+using ClientApiService.Services;
+using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
-
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? Environment.GetEnvironmentVariable("CONNECTION_STRING")
-    ?? "Server=sqlserver;Database=FiasDb;User=sa;Password=YourPassword123!;TrustServerCertificate=True;";
-
+// DB Context
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-builder.Services.AddHttpClient();
-builder.Services.AddScoped<IClientService, ClientService>();
+// Identity
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>()
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddDefaultTokenProviders();
 
+// JWT
+var jwtSettings = builder.Configuration.GetSection("JwtSettings");
+builder.Services.Configure<JwtSettings>(jwtSettings);
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtSettings["Issuer"],
+        ValidAudience = jwtSettings["Audience"],
+        IssuerSigningKey = new SymmetricSecurityKey(
+            Encoding.UTF8.GetBytes(jwtSettings["SecretKey"]!))
+    };
+});
+
+builder.Services.AddAuthorization();
+builder.Services.AddScoped<AuthService>();
+
+// Controllers
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+builder.Services.AddScoped<ClientApiService.Interfaces.IClientService, ClientApiService.Services.ClientService>();
+
+// DeepSeek HTTP Client
+builder.Services.AddHttpClient<DeepSeekLeadGenerator>();
+
+// Lead Generator
+builder.Services.AddSingleton<ILeadGeneratorService, DeepSeekLeadGenerator>();
+
+// Background Service
+builder.Services.AddHostedService<LeadRandomizerBackgroundService>();
+
 var app = builder.Build();
+
+// Migrate DB 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+    // Вместо миграций — автоматическое создание таблиц:
+    db.Database.EnsureCreated();
+
+    // Seed ролей вручную (если их нет)
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    var roles = new[] { "Admin", "Operator", "Viewer" };
+    foreach (var roleName in roles)
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new IdentityRole(roleName));
+        }
+    }
+
+    // Seed админа (если нет)
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    if (await userManager.FindByEmailAsync("admin@fias.local") == null)
+    {
+        var admin = new ApplicationUser
+        {
+            UserName = "admin@fias.local",
+            Email = "admin@fias.local",
+            FullName = "Admin User"
+        };
+        await userManager.CreateAsync(admin, "Admin123!");
+        await userManager.AddToRoleAsync(admin, "Admin");
+    }
+}
+
 
 if (app.Environment.IsDevelopment())
 {
@@ -25,13 +105,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
-
-app.Urls.Add("http://0.0.0.0:8081");
-
-Console.WriteLine("🚀 Client API Service запущен на http://localhost:8081");
-Console.WriteLine("📚 Swagger: http://localhost:8081/swagger");
 
 app.Run();

@@ -4,34 +4,43 @@
 @inject ISnackbar Snackbar
 @inject NavigationManager NavManager
 
-
 <MudText Typo="Typo.h5" Class="mb-4">➕ Новый лид</MudText>
 
 <MudPaper Padding="Padding.Medium" Elevation="2">
-    <MudTextField @bind-Value="@clientId"
-                  Label="Client ID *"
-                  HelperText="Уникальный идентификатор клиента"
-                  Required="true"
-                  Margin="Margin.Dense"
-                  Variant="Variant.Outlined"
-                  Immediate="true"/>
+    <!-- Client ID -->
+<MudTextField @bind-Value="@clientId"
+              Label="Client ID **"
+              HelperText="Уникальный идентификатор клиента"
+              Required="true"
+              Margin="Margin.Dense"
+              Variant="Variant.Outlined"
+              Immediate="true"
+              FullWidth="true"
+              Class="mb-4"/>
 
+    <!-- Имя клиента -->
     <MudTextField @bind-Value="@clientName"
                   Label="Имя клиента"
                   HelperText="Опционально"
                   Margin="Margin.Dense"
                   Variant="Variant.Outlined"
-                  Immediate="true"/>
+                  Immediate="true"
+                  FullWidth="true"
+                  Class="mb-4"/>
 
+    <!-- Адрес -->
     <MudTextField @bind-Value="@rawAddress"
-                  Label="Адрес *"
+                  Label="Адрес **"
                   HelperText="Введите адрес для исправления"
                   Required="true"
                   Lines="3"
                   Margin="Margin.Dense"
                   Variant="Variant.Outlined"
-                  Immediate="true"/>
+                  Immediate="true"
+                  FullWidth="true"
+                  Class="mb-4"/>
 
+    <!-- Кнопки -->
     <div class="d-flex justify-end mt-4">
         <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="@Cancel">
             Отмена
@@ -62,7 +71,6 @@
     private string message = "";
     private Severity alertSeverity = Severity.Info;
 
-    // ✅ МЕТОД ПЕРЕИМЕНОВАН В SubmitForm
     private async Task SubmitForm()
     {
         if (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(rawAddress))
@@ -81,7 +89,7 @@
             var json = "{\"clientId\":\"" + clientId + "\",\"clientName\":\"" + clientName + "\",\"rawAddress\":\"" + rawAddress + "\"}";
             var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
             
-            var response = await Http.PostAsync("http://client-api:8081/api/lead", content);
+            var response = await Http.PostAsync("/api/lead", content);
 
             if (response.IsSuccessStatusCode)
             {

@@ -1,4 +1,6 @@
 ﻿
+using Microsoft.AspNetCore.Authorization;
+
 namespace ClientApiService.Controllers
 {
     [ApiController]

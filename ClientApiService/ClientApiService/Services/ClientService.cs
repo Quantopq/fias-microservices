@@ -1,4 +1,5 @@
-﻿
+﻿using FiasApiClient.Models;
+
 namespace ClientApiService.Services
 {
     public class ClientService : IClientService
@@ -65,17 +66,43 @@ namespace ClientApiService.Services
         {
             var client = _httpClientFactory.CreateClient();
 
+           
+            _logger.LogInformation("Отправка в FIAS: Client={Client}, Region={Region}",
+                request.Client, request.Region);
+
+            var requestBody = new
+            {
+                client = request.Client ?? "Unknown",
+                region = request.Region ?? "Unknown"
+            };
+
             var content = new StringContent(
-                JsonSerializer.Serialize(request),
-                Encoding.UTF8,
+                System.Text.Json.JsonSerializer.Serialize(requestBody),
+                System.Text.Encoding.UTF8,
                 "application/json");
+
+            _logger.LogInformation("JSON запрос: {Json}",
+                System.Text.Json.JsonSerializer.Serialize(requestBody));
 
             var response = await client.PostAsync($"{_fiasServiceUrl}/api/fias/suggest", content);
 
             if (response.IsSuccessStatusCode)
             {
                 var responseString = await response.Content.ReadAsStringAsync();
-                return JsonSerializer.Deserialize<ClientResponseDto>(responseString);
+                _logger.LogInformation("FIAS ответ: {Response}", responseString);
+
+              
+                var clientResponse = JsonSerializer.Deserialize<ClientResponseDto>(responseString);
+
+                if (clientResponse != null && !string.IsNullOrEmpty(clientResponse.kladr))
+                {
+                    _logger.LogInformation("KLADR найден: {Kladr}", clientResponse.kladr);
+                    return clientResponse;
+                }
+                else
+                {
+                    _logger.LogWarning("FIAS вернул пустой ответ");
+                }
             }
 
             return null;

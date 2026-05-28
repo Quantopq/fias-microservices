@@ -22,3 +22,4 @@ global using ClientApiService.Models;
 global using ClientApiService.Services;
 global using ClientApiService.Interfaces;
 global using ClientApiService.Data;
+

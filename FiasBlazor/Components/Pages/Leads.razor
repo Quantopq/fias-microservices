@@ -36,7 +36,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        _leads = await Http.GetFromJsonAsync<List<LeadResponseDto>>("http://client-api:8081/api/lead");
+        _leads = await Http.GetFromJsonAsync<List<LeadResponseDto>>("/api/lead");
     }
 
     private Color GetStatusColor(string status) => status switch
@@ -47,6 +47,6 @@
         _ => Color.Default
     };
 
-    private Color GetKladrColor(string? kladr) => 
+    private Color GetKladrColor(string? kladr) =>
         string.IsNullOrEmpty(kladr) ? Color.Error : Color.Primary;
 }
