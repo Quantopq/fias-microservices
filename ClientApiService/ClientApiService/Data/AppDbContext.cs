@@ -1,8 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
-using ClientApiService.Models;
-using Microsoft.AspNetCore.Identity;
-
+﻿
 namespace ClientApiService.Data;
 
 public class AppDbContext : IdentityDbContext<ApplicationUser>
@@ -38,11 +34,5 @@ public class AppDbContext : IdentityDbContext<ApplicationUser>
             entity.ToTable("Leads", "dbo"); // Тоже явно указываем схему
         });
 
-        // Seed ролей (только если таблица пустая)
-       // modelBuilder.Entity<IdentityRole>().HasData(
-         //   new IdentityRole { Id = "1", Name = "Admin", NormalizedName = "ADMIN" },
-           // new IdentityRole { Id = "2", Name = "Operator", NormalizedName = "OPERATOR" },
-            //new IdentityRole { Id = "3", Name = "Viewer", NormalizedName = "VIEWER" }
-        //);
     }
 }

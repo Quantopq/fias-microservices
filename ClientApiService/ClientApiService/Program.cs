@@ -1,14 +1,21 @@
-﻿using System.Text;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
-using ClientApiService.Data;
-using ClientApiService.Models;
-using ClientApiService.Services;
-using Microsoft.OpenApi.Models;
-
+﻿
 var builder = WebApplication.CreateBuilder(args);
+
+
+
+// 🔑 Получение API ключей из переменных окружения
+var deepSeekApiKey = builder.Configuration["DeepSeek:ApiKey"]
+                     ?? Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
+
+// DeepSeek HTTP Client
+builder.Services.AddHttpClient<DeepSeekLeadGenerator>(client =>
+{
+    var apiKey = builder.Configuration["DeepSeek:ApiKey"]
+                 ?? Environment.GetEnvironmentVariable("DEEPSEEK_API_KEY");
+
+    client.BaseAddress = new Uri("https://api.deepseek.com/v1");
+    client.DefaultRequestHeaders.Add("Authorization", $"Bearer {apiKey}");
+});
 
 // DB Context
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -52,6 +59,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 builder.Services.AddScoped<ClientApiService.Interfaces.IClientService, ClientApiService.Services.ClientService>();
+
+
 
 // DeepSeek HTTP Client
 builder.Services.AddHttpClient<DeepSeekLeadGenerator>();

@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-
+﻿
 namespace ClientApiService.Models;
 
 public class ApplicationUser : IdentityUser
