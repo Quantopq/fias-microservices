@@ -1,7 +1,4 @@
-﻿using ClientApiService.Data;
-using ClientApiService.Models;
-using Microsoft.EntityFrameworkCore;
-
+﻿
 namespace ClientApiService.Services;
 
 public class LeadRandomizerBackgroundService : BackgroundService

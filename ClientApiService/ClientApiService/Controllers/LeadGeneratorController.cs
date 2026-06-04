@@ -1,12 +1,8 @@
-﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using ClientApiService.Services;
-
+﻿
 namespace ClientApiService.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-//[Authorize(Roles = "Admin,Operator")]
 public class LeadGeneratorController : ControllerBase
 {
     private readonly ILeadGeneratorService _generator;

@@ -1,9 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using ClientApiService.DTOs;
-using ClientApiService.Models;
-using ClientApiService.Services;
-
+﻿
 namespace ClientApiService.Controllers;
 
 [ApiController]

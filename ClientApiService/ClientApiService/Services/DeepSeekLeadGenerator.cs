@@ -1,6 +1,4 @@
-﻿using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
+﻿
 
 namespace ClientApiService.Services;
 
